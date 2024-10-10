@@ -17,7 +17,6 @@ export const durationInMinutes = (from: Date | string, to: Date | string): numbe
 };
 
 export const isSameDay = (date1: Date, date2: Date): boolean => {
-  console.log(startOfDay(date1).toUTCString(), startOfDay(date2).toUTCString());
   return startOfDay(date1).toUTCString() === startOfDay(date2).toUTCString();
 };
 
