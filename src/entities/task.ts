@@ -24,6 +24,12 @@ export class Task {
   @Column({ type: 'timestamptz' })
   to: Date;
 
+  @Column({ type: 'int' })
+  duration: number;
+
+  @Column()
+  date: string;
+
   @ManyToOne(() => Employee, (employee) => employee.tasks)
   employeeId: Employee;
 

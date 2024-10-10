@@ -7,11 +7,32 @@ import { TaskRepository } from '~/repository/task';
 import { NotfoundError } from '~/error/notfound-error';
 import { Task } from '~/entities/task';
 import { createPagination } from '~/utils/create-pagination';
+import { durationInMinutes, formateTaskDate } from '~/utils/date';
+import { MAX_DURATION_IN_MINUTES } from '~/config/constant';
+import { BadRequestError } from '~/error/bad-request-error';
 
 export const createTaskController = asyncHandler(async (req, res) => {
   const data = <CreateTaskDto>req.body;
 
-  const task = TaskRepository.create(data);
+  const duration = durationInMinutes(data.from, data.to);
+
+  const totalMinutes = await TaskRepository.sum('duration', {
+    employeeId: { id: Number(data.employeeId) },
+    date: formateTaskDate(data.from),
+  });
+
+  const totalDuration = duration + (totalMinutes || 0);
+
+  if (totalDuration > MAX_DURATION_IN_MINUTES) {
+    throw new BadRequestError('Employee can not work more than 8 hours a day');
+  }
+
+  const task = TaskRepository.create({
+    ...data,
+    duration,
+    date: formateTaskDate(data.from),
+    employeeId: { id: Number(data.employeeId) },
+  });
 
   await TaskRepository.save(task);
 
@@ -35,7 +56,24 @@ export const updateTaskController = asyncHandler(async (req, res) => {
     throw new NotfoundError(`Task With ID ${taskId} Not Found`);
   }
 
-  Object.assign(task, data);
+  const duration = durationInMinutes(data.from, data.to);
+
+  const totalMinutes = await TaskRepository.sum('duration', {
+    employeeId: { id: Number(data.employeeId) },
+    date: formateTaskDate(data.from),
+  });
+
+  const totalDuration = duration + (totalMinutes || 0);
+
+  if (totalDuration > MAX_DURATION_IN_MINUTES) {
+    throw new BadRequestError('Employee can not work more than 8 hours a day');
+  }
+
+  Object.assign(task, {
+    ...data,
+    duration,
+    date: formateTaskDate(data.from),
+  });
 
   await TaskRepository.save(task);
 
@@ -105,6 +143,13 @@ export const findAllTasksController = asyncHandler(async (req, res) => {
       employeeId: {
         id: Number(filter.employeeId),
       },
+    };
+  }
+
+  if (filter?.date) {
+    query.where = {
+      ...query.where,
+      date: formateTaskDate(new Date(filter.date)),
     };
   }
 

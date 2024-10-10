@@ -18,5 +18,5 @@ export const globalErrorHandlerMiddleware = (
     delete error.stack;
   }
 
-  res.status(error.statusCode).json(error);
+  res.status(error.statusCode).json({ ...error, stack: error.stack });
 };

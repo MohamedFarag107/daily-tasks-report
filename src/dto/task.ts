@@ -5,14 +5,14 @@ import { Task } from '~/entities/task';
 
 export type CreateTaskDto = {
   description: Task['description'];
-  employeeId: Task['employeeId'];
+  employeeId: number;
   from: Task['from'];
   to: Task['to'];
 };
 
 export type UpdateTaskDto = {
   description: Task['description'];
-  employeeId: Task['employeeId'];
+  employeeId: number;
   from: Task['from'];
   to: Task['to'];
 };
@@ -23,6 +23,7 @@ export type FindAllTasksDto = {
   limit?: string;
   order?: Record<keyof Task, FindOptionsOrderValue>;
   filter?: {
-    employeeId: string;
+    employeeId?: string;
+    date?: string;
   };
 };

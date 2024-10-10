@@ -1,8 +1,10 @@
 import { body, param, query, ValidationChain } from 'express-validator';
 import { FindOptionsOrderValue } from 'typeorm';
 
+import { MAX_DURATION_IN_MINUTES } from '~/config/constant';
 import { Task } from '~/entities/task';
 import { EmployeeRepository } from '~/repository/employee';
+import { durationInMinutes, isSameDay, isDate } from '~/utils/date';
 
 export const createTaskValidation: ValidationChain[] = [
   body('description')
@@ -38,9 +40,24 @@ export const createTaskValidation: ValidationChain[] = [
     .withMessage('To date must be a valid date'),
   body('from').custom((fromValue, { req }) => {
     const { from, to } = req.body;
-    if (new Date(from) >= new Date(to)) {
+
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+
+    if (!isSameDay(fromDate, toDate)) {
+      throw new Error('Task From and To date must be in the same day');
+    }
+
+    if (fromDate >= toDate) {
       throw new Error('Task From date must be before To date');
     }
+
+    const duration = durationInMinutes(fromDate, toDate);
+
+    if (duration <= 0 || duration > MAX_DURATION_IN_MINUTES) {
+      throw new Error('Task duration must be between 1 minute and 8 hours');
+    }
+
     return true;
   }),
 ];
@@ -109,6 +126,11 @@ export const findAllTasksValidation: ValidationChain[] = [
       if (value.employeeId && !/^\d+$/.test(value.employeeId)) {
         throw new Error('Employee ID in filter must be a number');
       }
+
+      if (value.date && !isDate(value.date)) {
+        throw new Error('Date in filter must be a valid date');
+      }
+
       return true;
     }),
 ];
