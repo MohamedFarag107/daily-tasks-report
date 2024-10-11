@@ -1,8 +1,8 @@
-import { FindManyOptions, ILike } from 'typeorm';
+import { FindManyOptions, ILike, Not } from 'typeorm';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 
 import { asyncHandler } from '~/utils/async-handler';
-import { CreateTaskDto, FindAllTasksDto, UpdateTaskDto } from '~/dto/task';
+import { CreateTaskDto, DailyTaskSummaryDto, FindAllTasksDto, UpdateTaskDto } from '~/dto/task';
 import { TaskRepository } from '~/repository/task';
 import { NotfoundError } from '~/error/notfound-error';
 import { Task } from '~/entities/task';
@@ -61,6 +61,7 @@ export const updateTaskController = asyncHandler(async (req, res) => {
   const totalMinutes = await TaskRepository.sum('duration', {
     employeeId: { id: Number(data.employeeId) },
     date: formateTaskDate(data.from),
+    id: Not(task.id),
   });
 
   const totalDuration = duration + (totalMinutes || 0);
@@ -170,5 +171,26 @@ export const findAllTasksController = asyncHandler(async (req, res) => {
     message: 'The task(s) were found successfully.',
     pagination,
     data: docs,
+  });
+});
+
+export const dailyTaskSummaryController = asyncHandler(async (req, res) => {
+  const { date, employeeId } = <DailyTaskSummaryDto>req.query;
+
+  const totalMinutes = await TaskRepository.sum('duration', {
+    date: formateTaskDate(date as string),
+    employeeId: { id: Number(employeeId) },
+  });
+
+  const remainingMinutes = MAX_DURATION_IN_MINUTES - (totalMinutes || 0);
+
+  res.status(StatusCodes.OK).json({
+    statusCode: StatusCodes.OK,
+    name: ReasonPhrases.OK,
+    message: 'Daily Task Summary',
+    data: {
+      total_minutes: totalMinutes || 0,
+      remaining_minutes: remainingMinutes,
+    },
   });
 });

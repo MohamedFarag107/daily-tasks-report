@@ -134,3 +134,16 @@ export const findAllTasksValidation: ValidationChain[] = [
       return true;
     }),
 ];
+
+export const dailyTaskSummaryValidation: ValidationChain[] = [
+  query('date')
+    .notEmpty()
+    .withMessage('Date is required')
+    .isISO8601()
+    .withMessage('Date must be a valid date'),
+  query('employeeId')
+    .notEmpty()
+    .withMessage('Employee ID is required')
+    .isNumeric()
+    .withMessage('Employee ID must be a number'),
+];

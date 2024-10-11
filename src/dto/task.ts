@@ -27,3 +27,8 @@ export type FindAllTasksDto = {
     date?: string;
   };
 };
+
+export type DailyTaskSummaryDto = {
+  date: string;
+  employeeId: string;
+};
