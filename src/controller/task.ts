@@ -1,4 +1,4 @@
-import { FindManyOptions, ILike, Not } from 'typeorm';
+import { FindManyOptions, ILike, LessThanOrEqual, MoreThanOrEqual, Not } from 'typeorm';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 
 import { asyncHandler } from '~/utils/async-handler';
@@ -25,6 +25,29 @@ export const createTaskController = asyncHandler(async (req, res) => {
 
   if (totalDuration > MAX_DURATION_IN_MINUTES) {
     throw new BadRequestError('Employee can not work more than 8 hours a day');
+  }
+
+  // from date task           from date task 2          from date task => not valid task
+  // to date task           to date task 2              to date task => not valid task
+  const isTaskNotValid = await TaskRepository.findOne({
+    where: [
+      {
+        employeeId: { id: Number(data.employeeId) },
+        date: formateTaskDate(data.from),
+        from: LessThanOrEqual(data.from),
+        to: MoreThanOrEqual(data.from),
+      },
+      {
+        employeeId: { id: Number(data.employeeId) },
+        date: formateTaskDate(data.from),
+        from: LessThanOrEqual(data.to),
+        to: MoreThanOrEqual(data.to),
+      },
+    ],
+  });
+
+  if (isTaskNotValid) {
+    throw new BadRequestError('Task time overlaps with an existing task');
   }
 
   const task = TaskRepository.create({
