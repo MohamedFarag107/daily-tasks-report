@@ -27,8 +27,6 @@ export const createTaskController = asyncHandler(async (req, res) => {
     throw new BadRequestError('Employee can not work more than 8 hours a day');
   }
 
-  // from date task           from date task 2          from date task => not valid task
-  // to date task           to date task 2              to date task => not valid task
   const isTaskNotValid = await TaskRepository.findOne({
     where: [
       {
